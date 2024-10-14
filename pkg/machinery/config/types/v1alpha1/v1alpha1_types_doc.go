@@ -3036,6 +3036,23 @@ func (Bridge) Doc() *encoder.Doc {
 	return doc
 }
 
+func (BridgePort) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BridgePort",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "Bridge contains the various options for configuring a bridged interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BridgePort contains the various options for configuring a bridged interface.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "Device",
+				FieldName: "bridgePort",
+			},
+		},
+	}
+	doc.AddExample("", networkConfigDynamicBridgePortsExample())
+
+	return doc
+}
+
 func (Vlan) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "Vlan",

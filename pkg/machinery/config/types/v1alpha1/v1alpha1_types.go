@@ -1747,6 +1747,12 @@ type Device struct {
 	//   examples:
 	//     - value: networkConfigBridgeExample()
 	DeviceBridge *Bridge `yaml:"bridge,omitempty"`
+	//   description: |
+	//     Configure this device as a bridge port.
+	//     This can be used to dynamically assign network interfaces to a bridge.
+	//   examples:
+	//     - value: networkConfigDynamicBridgePortsExample()
+	DeviceBridgePort *BridgePort `yaml:"bridgePort,omitempty"`
 	//   description: VLAN specific options.
 	DeviceVlans VlanList `yaml:"vlans,omitempty"`
 	//   description: |
@@ -2004,6 +2010,11 @@ type Bridge struct {
 	//     A bridge option.
 	//     Please see the official kernel documentation.
 	BridgeVLAN *BridgeVLAN `yaml:"vlan,omitempty"`
+}
+
+type BridgePort struct {
+	//   description: The name of the bridge master interface
+	BridgePortMaster string `yaml:"master,omitempty"`
 }
 
 // VlanList is a list of *Vlan structures with overridden merge process.
