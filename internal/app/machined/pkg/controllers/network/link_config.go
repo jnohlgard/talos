@@ -348,6 +348,20 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			}
 		}
 
+		if device.BridgePort() != nil {
+			if iface, exists := bridgedLinks[device.Interface()]; exists && iface != device.Interface() {
+				logger.Sugar().Warnf("link %q is included in both bridges %q and %q", device.Interface(),
+					iface, device.BridgePort().Master())
+			}
+
+			if bondData, exists := bondedLinks[device.Interface()]; exists {
+				logger.Sugar().Warnf("link %q is included into both bond %q and bridge %q", device.Interface(),
+					bondData.F1, device.BridgePort().Master())
+			}
+
+			bridgedLinks[device.Interface()] = device.BridgePort().Master()
+		}
+
 		if device.WireguardConfig() != nil {
 			if err := wireguardLink(linkMap[device.Interface()], device.WireguardConfig()); err != nil {
 				logger.Error("error parsing wireguard config", zap.Error(err))
@@ -384,6 +398,16 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 	}
 
 	for slaveName, bridgeIface := range bridgedLinks {
+		if _, exists := linkMap[bridgeIface]; !exists {
+			linkMap[bridgeIface] = &network.LinkSpecSpec{
+				Name:        bridgeIface,
+				Up:          true,
+				ConfigLayer: network.ConfigMachineConfiguration,
+			}
+			if err := SetBridgeMaster(linkMap[bridgeIface], nil); err != nil {
+				logger.Error("error parsing bridge config", zap.Error(err))
+			}
+		}
 		if _, exists := linkMap[slaveName]; !exists {
 			linkMap[slaveName] = &network.LinkSpecSpec{
 				Name:        slaveName,
