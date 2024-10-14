@@ -3365,7 +3365,7 @@ BridgeMasterSpec describes bridge settings if Kind == "bridge".
 <a name="talos.resource.definitions.network.BridgeSlave"></a>
 
 ### BridgeSlave
-BridgeSlave contains a bond's master name and slave index.
+BridgeSlave contains the name of the master bridge of a bridged interface
 
 
 | Field | Type | Label | Description |
