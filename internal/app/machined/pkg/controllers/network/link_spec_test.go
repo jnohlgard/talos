@@ -707,7 +707,7 @@ func (suite *LinkSpecSuite) TestBridge() {
 	ctest.UpdateWithConflicts(suite, bridge, func(r *network.LinkSpec) error {
 		r.TypedSpec().BridgeMaster.STP.Enabled = true
 		r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled = true
-
+		r.TypedSpec().BridgeMaster.VLAN.DefaultPVID = 123
 		return nil
 	})
 

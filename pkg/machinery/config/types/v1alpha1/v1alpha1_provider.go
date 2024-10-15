@@ -1052,6 +1052,22 @@ func (s *STP) Enabled() bool {
 	return *s.STPEnabled
 }
 
+// ID is the VLAN ID that will be assigned to untagged frames
+func (p *BridgePVID) ID() uint16 {
+	if p == nil {
+		return 0
+	}
+	return p.BridgePortVlanId
+}
+
+// EgressUntagged if true, removes VLAN tags on egress (outgoing) frames with VLAN ID matching the port's PVID
+func (p *BridgePVID) EgressUntagged() bool {
+	if p == nil {
+		return true
+	}
+	return pointer.SafeDeref(p.BridgeEgressUntagged)
+}
+
 // FilteringEnabled implements the config.BridgeVLAN interface.
 func (v *BridgeVLAN) FilteringEnabled() bool {
 	if v == nil {
@@ -1059,6 +1075,15 @@ func (v *BridgeVLAN) FilteringEnabled() bool {
 	}
 
 	return pointer.SafeDeref(v.BridgeVLANFiltering)
+}
+
+// DefaultPVID implements the config.BridgeVLAN interface.
+func (v *BridgeVLAN) DefaultPVID() uint16 {
+	if v == nil {
+		return 1
+	}
+
+	return v.BridgeDefaultPVID
 }
 
 // Interfaces implements the config.Bridge interface.
@@ -1090,6 +1115,20 @@ func (b *BridgePort) Master() string {
 		return ""
 	}
 	return b.BridgePortMaster
+}
+
+// PVID implements the config.BridgePort interface.
+func (b *BridgePort) PVID() config.BridgePVID {
+	if b == nil {
+		return (*BridgePVID)(nil)
+	}
+
+	return b.BridgePortPVID
+}
+
+// AllowedVLANs implements the config.BridgePort interface.
+func (b *BridgePort) AllowedVLANs() []uint16 {
+	return b.BridgePortAllowedVLANs
 }
 
 // Addresses implements the MachineNetwork interface.

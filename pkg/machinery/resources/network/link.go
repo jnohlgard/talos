@@ -73,7 +73,23 @@ type STPSpec struct {
 //
 //gotagsrewrite:gen
 type BridgeVLANSpec struct {
-	FilteringEnabled bool `yaml:"filteringEnabled" protobuf:"1"`
+	FilteringEnabled bool   `yaml:"filteringEnabled" protobuf:"1"`
+	DefaultPVID      uint16 `yaml:"defaultPvid" protobuf:"2"`
+}
+
+// BridgePVIDSpec describes how a bridge port should handle untagged frames.
+//
+//gotagsrewrite:gen
+type BridgePVIDSpec struct {
+	ID             uint16 `yaml:"vid" protobuf:"1"`
+	EgressUntagged bool   `yaml:"untagged" protobuf:"2"`
+}
+
+// BridgePortSpec describes settings for bridge ports
+//
+//gotagsrewrite:gen
+type BridgePortSpec struct {
+	PVID BridgePVIDSpec `yaml:"pvid,omitempty" protobuf:"2"`
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".

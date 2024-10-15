@@ -253,6 +253,7 @@ type STP interface {
 // BridgeVLAN contains the VLAN settings for a bridge.
 type BridgeVLAN interface {
 	FilteringEnabled() bool
+	DefaultPVID() uint16
 }
 
 // Bridge contains the options for configuring a bridged interface.
@@ -262,9 +263,17 @@ type Bridge interface {
 	VLAN() BridgeVLAN
 }
 
+// BridgePVID contains the PVID settings for a bridge port
+type BridgePVID interface {
+	ID() uint16
+	EgressUntagged() bool
+}
+
 // BridgePort contains the options for a bridge port
 type BridgePort interface {
 	Master() string
+	AllowedVLANs() []uint16
+	PVID() BridgePVID
 }
 
 // Vlan represents vlan settings for a device.

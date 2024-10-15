@@ -237,6 +237,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 									},
 									BridgeVLAN: &v1alpha1.BridgeVLAN{
 										BridgeVLANFiltering: pointer.To(true),
+										BridgeDefaultPVID:   321,
 									},
 								},
 							},
@@ -365,6 +366,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.Equal(network.LinkKindBridge, r.TypedSpec().Kind)
 				asrt.True(r.TypedSpec().BridgeMaster.STP.Enabled)
 				asrt.True(r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled)
+				asrt.Equal(uint16(321), r.TypedSpec().BridgeMaster.VLAN.DefaultPVID)
 			case "br1":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)

@@ -43,6 +43,9 @@ func (a bridgeMaster) Encode() ([]byte, error) {
 
 	encoder.Uint32(unix.IFLA_BR_STP_STATE, uint32(stpEnabled))
 	encoder.Uint8(unix.IFLA_BR_VLAN_FILTERING, uint8(vlanFiltering))
+	if vlanFiltering != 0 {
+		encoder.Uint16(unix.IFLA_BR_VLAN_DEFAULT_PVID, bridge.VLAN.DefaultPVID)
+	}
 
 	return encoder.Encode()
 }
