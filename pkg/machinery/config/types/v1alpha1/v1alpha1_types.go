@@ -1997,6 +1997,8 @@ type BridgeVLAN struct {
 	//   description: Whether VLAN filtering is enabled.
 	BridgeVLANFiltering *bool  `yaml:"vlanFiltering,omitempty"`
 	BridgeDefaultPVID   uint16 `yaml:"defaultPvid,omitempty"`
+	BridgeStatsEnabled  *bool  `yaml:"statsEnabled,omitempty"`
+	BridgeStatsPerPort  *bool  `yaml:"statsPerPort,omitempty"`
 }
 
 // BridgePVID specifies how the bridge should handle frames without VLAN tags

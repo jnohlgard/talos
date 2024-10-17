@@ -1086,6 +1086,24 @@ func (v *BridgeVLAN) DefaultPVID() uint16 {
 	return v.BridgeDefaultPVID
 }
 
+// StatsEnabled implements the config.BridgeVLAN interface.
+func (v *BridgeVLAN) StatsEnabled() bool {
+	if v == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(v.BridgeStatsEnabled)
+}
+
+// StatsEnabled implements the config.BridgeVLAN interface.
+func (v *BridgeVLAN) StatsPerPort() bool {
+	if v == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(v.BridgeStatsPerPort)
+}
+
 // Interfaces implements the config.Bridge interface.
 func (b *Bridge) Interfaces() []string {
 	return b.BridgedInterfaces

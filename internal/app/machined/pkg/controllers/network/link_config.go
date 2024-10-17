@@ -280,10 +280,6 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			continue
 		}
 
-		if device.Bond() == nil && device.Bridge() == nil {
-			continue
-		}
-
 		if device.Bond() != nil {
 			for idx, linkName := range device.Bond().Interfaces() {
 				if bondData, exists := bondedLinks[linkName]; exists && bondData.F1 != device.Interface() {

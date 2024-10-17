@@ -41,11 +41,23 @@ func (a bridgeMaster) Encode() ([]byte, error) {
 		vlanFiltering = 1
 	}
 
+	vlanStats := 0
+	if bridge.VLAN.StatsEnabled {
+		vlanStats = 1
+	}
+
+	vlanStatsPerPort := 0
+	if bridge.VLAN.StatsPerPort {
+		vlanStatsPerPort = 1
+	}
+
 	encoder.Uint32(unix.IFLA_BR_STP_STATE, uint32(stpEnabled))
 	encoder.Uint8(unix.IFLA_BR_VLAN_FILTERING, uint8(vlanFiltering))
 	if vlanFiltering != 0 {
 		encoder.Uint16(unix.IFLA_BR_VLAN_DEFAULT_PVID, bridge.VLAN.DefaultPVID)
 	}
+	encoder.Uint8(unix.IFLA_BR_VLAN_STATS_ENABLED, uint8(vlanStats))
+	encoder.Uint8(unix.IFLA_BR_VLAN_STATS_PER_PORT, uint8(vlanStatsPerPort))
 
 	return encoder.Encode()
 }
@@ -68,7 +80,9 @@ func (a bridgeMaster) Decode(data []byte) error {
 		case unix.IFLA_BR_VLAN_DEFAULT_PVID:
 			bridge.VLAN.DefaultPVID = decoder.Uint16()
 		case unix.IFLA_BR_VLAN_STATS_ENABLED:
-			bridge.VLAN.VLANStatsEnabled = decoder.Uint16()
+			bridge.VLAN.StatsEnabled = decoder.Uint8() == 1
+		case unix.IFLA_BR_VLAN_STATS_PER_PORT:
+			bridge.VLAN.StatsPerPort = decoder.Uint8() == 1
 		}
 	}
 

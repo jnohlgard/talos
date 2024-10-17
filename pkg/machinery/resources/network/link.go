@@ -75,8 +75,8 @@ type STPSpec struct {
 type BridgeVLANSpec struct {
 	FilteringEnabled bool   `yaml:"filteringEnabled" protobuf:"1"`
 	DefaultPVID      uint16 `yaml:"defaultPvid" protobuf:"2"`
-	VLANStatsEnabled bool   `yaml:"vlanStatsEnabled" protobuf:"3"`
-	VLANStatsPerPort bool   `yaml:"vlanStatsPerPort" protobuf:"4"`
+	StatsEnabled     bool   `yaml:"vlanStatsEnabled" protobuf:"3"`
+	StatsPerPort     bool   `yaml:"vlanStatsPerPort" protobuf:"4"`
 }
 
 // BridgePVIDSpec describes how a bridge port should handle untagged frames.

@@ -149,6 +149,8 @@ func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.Bridge) erro
 			VLAN: network.BridgeVLANSpec{
 				FilteringEnabled: bridge.VLAN().FilteringEnabled(),
 				DefaultPVID:      bridge.VLAN().DefaultPVID(),
+				StatsEnabled:     bridge.VLAN().StatsEnabled(),
+				StatsPerPort:     bridge.VLAN().StatsPerPort(),
 			},
 		}
 	}

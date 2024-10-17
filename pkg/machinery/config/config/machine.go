@@ -254,6 +254,8 @@ type STP interface {
 type BridgeVLAN interface {
 	FilteringEnabled() bool
 	DefaultPVID() uint16
+	StatsEnabled() bool
+	StatsPerPort() bool
 }
 
 // Bridge contains the options for configuring a bridged interface.

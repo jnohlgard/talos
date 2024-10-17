@@ -25,6 +25,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl"
+	"maps"
 )
 
 // LinkSpecController applies network.LinkSpec to the actual interfaces.
@@ -121,7 +122,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing links: %w", err)
 		}
 
-		// list all bridge vlans
+		// list all bridge vlan filters
 		bridgeVlans, err := netlink.BridgeVlanList()
 		if err != nil {
 			return fmt.Errorf("error getting bridge vlans: %w", err)
@@ -514,6 +515,11 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 
 				logger.Info("updated bridge settings")
+
+				*bridgeVlans, err = netlink.BridgeVlanList()
+				if err != nil {
+					return fmt.Errorf("error refreshing bridge VLAN filters: %w", err)
+				}
 			}
 		}
 
@@ -644,24 +650,79 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			existing.Attributes.Master = pointer.To(masterIndex)
 
 			logger.Info("enslaved/unslaved link", zap.String("parent", masterName))
-		}
-
-		if masterIndex != 0 && bridgeMasterName != "" {
-			portSpec := link.TypedSpec().BridgePort
-			var currentVlanIds []uint16
-			currentPvid := network.BridgePVIDSpec{}
-			if portVlans, exists := (*bridgeVlans)[int32(masterIndex)]; exists {
-				currentVlanIds = make([]uint16, len(portVlans))
-				for _, bvi := range portVlans {
-					currentVlanIds = append(currentVlanIds, bvi.Vid)
-					if bvi.PortVID() {
-						currentPvid.ID = bvi.Vid
-						currentPvid.EgressUntagged = bvi.EngressUntag()
-					}
-				}
+			var err error
+			*bridgeVlans, err = netlink.BridgeVlanList()
+			if err != nil {
+				return fmt.Errorf("error refreshing bridge VLAN filters: %w", err)
 			}
+		}
+		if link.TypedSpec().BridgeSlave.MasterName != "" || link.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
+			err := ctrl.updateBridgeVLANFilters(link, bridgeVlans, int(existing.Index))
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
 
-			vlansToAdd :=
+func (ctrl *LinkSpecController) updateBridgeVLANFilters(spec *network.LinkSpec,
+	bridgeVlans *map[int32][]*nl.BridgeVlanInfo, index int) error {
+	portSpec := spec.TypedSpec().BridgePort
+	if portSpec.AllowedVlanIds != nil {
+		link, err := netlink.LinkByIndex(index)
+		if err != nil {
+			return fmt.Errorf("error getting bridge port %q (if#%q) link info: %w", spec.TypedSpec().Name, index, err)
+		}
+		applyMaster := link.Attrs().MasterIndex != 0
+		applySelf := spec.TypedSpec().Kind == network.LinkKindBridge
+
+		vlansFound := map[uint16]struct{}{}
+		currentPvid := network.BridgePVIDSpec{}
+		if portVlans, exists := (*bridgeVlans)[int32(index)]; exists {
+			for _, info := range portVlans {
+				if info.PortVID() {
+					currentPvid.ID = info.Vid
+					currentPvid.EgressUntagged = info.EngressUntag()
+				}
+				vlansFound[info.Vid] = struct{}{}
+			}
+		}
+		var vlansToAdd []uint16
+		for _, vid := range portSpec.AllowedVlanIds {
+			if _, found := vlansFound[vid]; !found {
+				vlansToAdd = append(vlansToAdd, vid)
+			}
+		}
+		vlansToDelete := maps.Clone(vlansFound)
+		for _, vid := range portSpec.AllowedVlanIds {
+			delete(vlansToDelete, vid)
+		}
+		if currentPvid.ID != portSpec.PVID.ID {
+			err := netlink.BridgeVlanDel(link, currentPvid.ID, true, currentPvid.EgressUntagged, applySelf, applyMaster)
+			if err != nil {
+				return fmt.Errorf("failed to remove old PVID %q: %w", currentPvid.ID, err)
+			}
+			delete(vlansToDelete, currentPvid.ID)
+			err = netlink.BridgeVlanAdd(link, portSpec.PVID.ID, true, portSpec.PVID.EgressUntagged, applySelf, applyMaster)
+			if err != nil {
+				return fmt.Errorf("failed to add new PVID %q: %w", currentPvid.ID, err)
+			}
+		}
+		for vid := range maps.Keys(vlansToDelete) {
+			err := netlink.BridgeVlanDel(link, vid, false, false, applySelf, applyMaster)
+			if err != nil {
+				return fmt.Errorf("failed to remove old VLAN filter %q: %w", vid, err)
+			}
+		}
+		for _, vid := range vlansToAdd {
+			if vid == portSpec.PVID.ID {
+				continue
+			}
+			err := netlink.BridgeVlanAdd(link, vid, false, false, applySelf, applyMaster)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
