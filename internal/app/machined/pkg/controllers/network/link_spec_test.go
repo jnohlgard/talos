@@ -713,33 +713,50 @@ func (suite *LinkSpecSuite) TestBridge() {
 		return nil
 	})
 
+	// modify port VLAN filter settings
+	ctest.UpdateWithConflicts(suite, dummy1, func(r *network.LinkSpec) error {
+		r.TypedSpec().BridgePort.PVID.ID = 12
+		r.TypedSpec().BridgePort.PVID.EgressUntagged = true
+		r.TypedSpec().BridgePort.AllowedVlanIds = []uint16{1, 2, 3, 4}
+		return nil
+	})
+
 	suite.Assert().NoError(
 		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
 			func() error {
 				return suite.assertInterfaces(
-					[]string{bridgeName}, func(r *network.LinkStatus) error {
-						if !r.TypedSpec().BridgeMaster.STP.Enabled {
-							return retry.ExpectedErrorf(
-								"stp is not enabled on bridge %s", r.Metadata().ID(),
-							)
-						}
+					[]string{bridgeName, dummy1Name}, func(r *network.LinkStatus) error {
+						switch r.Metadata().ID() {
+						case bridgeName:
+							if !r.TypedSpec().BridgeMaster.STP.Enabled {
+								return retry.ExpectedErrorf(
+									"stp is not enabled on bridge %s", r.Metadata().ID(),
+								)
+							}
 
-						if !r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
-							return retry.ExpectedErrorf(
-								"vlan filtering is not enabled on bridge %s", r.Metadata().ID(),
-							)
-						}
+							if !r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
+								return retry.ExpectedErrorf(
+									"vlan filtering is not enabled on bridge %s", r.Metadata().ID(),
+								)
+							}
 
-						if !r.TypedSpec().BridgeMaster.VLAN.StatsEnabled {
-							return retry.ExpectedErrorf(
-								"vlan stats is not enabled on bridge %s", r.Metadata().ID(),
-							)
-						}
+							if !r.TypedSpec().BridgeMaster.VLAN.StatsEnabled {
+								return retry.ExpectedErrorf(
+									"vlan stats is not enabled on bridge %s", r.Metadata().ID(),
+								)
+							}
 
-						if !r.TypedSpec().BridgeMaster.VLAN.StatsPerPort {
-							return retry.ExpectedErrorf(
-								"vlan stats per port is not enabled on bridge %s", r.Metadata().ID(),
-							)
+							if !r.TypedSpec().BridgeMaster.VLAN.StatsPerPort {
+								return retry.ExpectedErrorf(
+									"vlan stats per port is not enabled on bridge %s", r.Metadata().ID(),
+								)
+							}
+						case dummy1Name:
+							if r.TypedSpec().BridgePort.PVID.ID != 12 {
+								return retry.ExpectedErrorf(
+									"bridge PVID not set on bridge port %s", r.Metadata().ID(),
+								)
+							}
 						}
 
 						return nil
