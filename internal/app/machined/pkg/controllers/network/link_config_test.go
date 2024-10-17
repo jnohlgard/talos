@@ -218,6 +218,13 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								DeviceInterface: "eth8",
 								DeviceBridgePort: &v1alpha1.BridgePort{
 									BridgePortMaster: "br1",
+									BridgePVID: &v1alpha1.BridgePVID{
+										BridgePortVlanId:     42,
+										BridgeEgressUntagged: pointer.To(true),
+									},
+									BridgePortAllowedVlanIds: []uint16{
+										42, 43, 99, 100,
+									},
 								},
 							},
 							{
@@ -363,6 +370,9 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 				asrt.True(r.TypedSpec().Up)
 				asrt.False(r.TypedSpec().Logical)
 				asrt.Equal("br1", r.TypedSpec().BridgeSlave.MasterName)
+				asrt.Equal(uint16(42), r.TypedSpec().BridgePort.PVID.ID)
+				asrt.True(r.TypedSpec().BridgePort.PVID.EgressUntagged)
+				asrt.ElementsMatch([]uint16{42, 43, 99, 100}, r.TypedSpec().BridgePort.AllowedVlanIds)
 			case "br0":
 				asrt.True(r.TypedSpec().Up)
 				asrt.True(r.TypedSpec().Logical)

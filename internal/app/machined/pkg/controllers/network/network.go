@@ -131,8 +131,8 @@ func SetBridgePort(link *network.LinkSpecSpec, bridgePort talosconfig.BridgePort
 			ID:             bridgePort.PVID().ID(),
 			EgressUntagged: bridgePort.PVID().EgressUntagged(),
 		},
+		AllowedVlanIds: slices.Clone(bridgePort.AllowedVlanIds()),
 	}
-	link.BridgePort.AllowedVlanIds = slices.Clone(bridgePort.AllowedVlanIds())
 	return nil
 }
 
