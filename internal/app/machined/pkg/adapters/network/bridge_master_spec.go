@@ -65,6 +65,10 @@ func (a bridgeMaster) Decode(data []byte) error {
 			bridge.STP.Enabled = decoder.Uint32() == 1
 		case unix.IFLA_BR_VLAN_FILTERING:
 			bridge.VLAN.FilteringEnabled = decoder.Uint8() == 1
+		case unix.IFLA_BR_VLAN_DEFAULT_PVID:
+			bridge.VLAN.DefaultPVID = decoder.Uint16()
+		case unix.IFLA_BR_VLAN_STATS_ENABLED:
+			bridge.VLAN.VLANStatsEnabled = decoder.Uint16()
 		}
 	}
 

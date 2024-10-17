@@ -9,7 +9,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
@@ -59,6 +58,9 @@ type LinkSpecSpec struct {
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"14"`
+
+	// Settings for individual ports (links) of a bridge device
+	BridgePort BridgePortSpec `yaml:"bridgePort,omitempty" protobuf:"15"`
 }
 
 // BondSlave contains a bond's master name and slave index.
@@ -94,6 +96,10 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.BondMaster, other.BondMaster)
 	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
+
+	if err := spec.BridgePort.Merge(other.BridgePort); err != nil {
+		return err
+	}
 
 	// Wireguard config should be able to apply non-zero values in earlier config layers which may be zero values in later layers.
 	// Thus, we handle each Wireguard configuration value discretely.

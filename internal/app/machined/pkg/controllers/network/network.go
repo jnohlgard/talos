@@ -7,6 +7,7 @@ package network
 
 import (
 	"net"
+	"slices"
 
 	"github.com/siderolabs/gen/pair/ordered"
 
@@ -117,10 +118,22 @@ func SetBondMaster(link *network.LinkSpecSpec, bond talosconfig.Bond) error {
 }
 
 // SetBridgeSlave sets the bridge slave spec.
-func SetBridgeSlave(link *network.LinkSpecSpec, bridge string) {
+func SetBridgeSlave(link *network.LinkSpecSpec, bridgeName string) {
 	link.BridgeSlave = network.BridgeSlave{
-		MasterName: bridge,
+		MasterName: bridgeName,
 	}
+}
+
+// SetBridgePort sets the bridge slave spec.
+func SetBridgePort(link *network.LinkSpecSpec, bridgePort talosconfig.BridgePort) error {
+	link.BridgePort = network.BridgePortSpec{
+		PVID: network.BridgePVIDSpec{
+			ID:             bridgePort.PVID().ID(),
+			EgressUntagged: bridgePort.PVID().EgressUntagged(),
+		},
+	}
+	link.BridgePort.AllowedVlanIds = slices.Clone(bridgePort.AllowedVlanIds())
+	return nil
 }
 
 // SetBridgeMaster sets the bridge master spec.

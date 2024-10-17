@@ -1123,12 +1123,12 @@ func (b *BridgePort) PVID() config.BridgePVID {
 		return (*BridgePVID)(nil)
 	}
 
-	return b.BridgePortPVID
+	return b.BridgePVID
 }
 
-// AllowedVLANs implements the config.BridgePort interface.
-func (b *BridgePort) AllowedVLANs() []uint16 {
-	return b.BridgePortAllowedVLANs
+// AllowedVlanIds implements the config.BridgePort interface.
+func (b *BridgePort) AllowedVlanIds() []uint16 {
+	return b.BridgePortAllowedVlanIds
 }
 
 // Addresses implements the MachineNetwork interface.

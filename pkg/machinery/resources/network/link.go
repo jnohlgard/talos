@@ -75,6 +75,8 @@ type STPSpec struct {
 type BridgeVLANSpec struct {
 	FilteringEnabled bool   `yaml:"filteringEnabled" protobuf:"1"`
 	DefaultPVID      uint16 `yaml:"defaultPvid" protobuf:"2"`
+	VLANStatsEnabled bool   `yaml:"vlanStatsEnabled" protobuf:"3"`
+	VLANStatsPerPort bool   `yaml:"vlanStatsPerPort" protobuf:"4"`
 }
 
 // BridgePVIDSpec describes how a bridge port should handle untagged frames.
@@ -89,7 +91,8 @@ type BridgePVIDSpec struct {
 //
 //gotagsrewrite:gen
 type BridgePortSpec struct {
-	PVID BridgePVIDSpec `yaml:"pvid,omitempty" protobuf:"2"`
+	PVID           BridgePVIDSpec `yaml:"pvid,omitempty" protobuf:"1"`
+	AllowedVlanIds []uint16       `yaml:"allowedVlanIds,omitempty" protobuf:"2"`
 }
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
@@ -124,6 +127,17 @@ func (vlan VLANSpec) ID() uint16 {
 // MTU Returns MTU=0 for type VLANSpec.
 func (vlan VLANSpec) MTU() uint32 {
 	return 0
+}
+
+func (b *BridgePortSpec) Merge(other BridgePortSpec) error {
+	if other.PVID.ID != 0 {
+		b.PVID = other.PVID
+	}
+
+	// dedupe the list of allowed VLAN IDs
+	b.AllowedVlanIds = slices.Compact(slices.Clone(slices.Sorted(slices.Values(slices.Concat(b.AllowedVlanIds, other.AllowedVlanIds)))))
+
+	return nil
 }
 
 // Equal checks two WireguardPeer structs for equality.

@@ -2001,8 +2001,10 @@ type BridgeVLAN struct {
 
 // BridgePVID specifies how the bridge should handle frames without VLAN tags
 type BridgePVID struct {
-	BridgePortVlanId     uint16 `yaml:"vlanId,omitempty"`
-	BridgeEgressUntagged *bool  `yaml:"egressUntagged,omitempty"`
+	//   description: VLAN ID assigned to untagged ingress traffic
+	BridgePortVlanId uint16 `yaml:"vid,omitempty"`
+	//   description: Remove VLAN tags from egress frames on this VLAN
+	BridgeEgressUntagged *bool `yaml:"untagged,omitempty"`
 }
 
 // Bridge contains the various options for configuring a bridge interface.
@@ -2021,9 +2023,9 @@ type Bridge struct {
 
 type BridgePort struct {
 	//   description: The name of the bridge master interface
-	BridgePortMaster       string      `yaml:"master,omitempty"`
-	BridgePortAllowedVLANs []uint16    `yaml:"allowedVLANs,omitempty"`
-	BridgePortPVID         *BridgePVID `yaml:"pvid,omitempty"`
+	BridgePortMaster         string      `yaml:"master,omitempty"`
+	BridgePVID               *BridgePVID `yaml:"pvid,omitempty"`
+	BridgePortAllowedVlanIds []uint16    `yaml:"allowedVlanIds,omitempty"`
 }
 
 // VlanList is a list of *Vlan structures with overridden merge process.

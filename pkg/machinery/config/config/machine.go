@@ -272,7 +272,7 @@ type BridgePVID interface {
 // BridgePort contains the options for a bridge port
 type BridgePort interface {
 	Master() string
-	AllowedVLANs() []uint16
+	AllowedVlanIds() []uint16
 	PVID() BridgePVID
 }
 

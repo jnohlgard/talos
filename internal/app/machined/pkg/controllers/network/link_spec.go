@@ -8,7 +8,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -16,15 +15,16 @@ import (
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/go-pointer"
-	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
-	"golang.zx2c4.com/wireguard/wgctrl"
-
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/vishvananda/netlink"
+	"github.com/vishvananda/netlink/nl"
+	"go.uber.org/zap"
+	"golang.org/x/sys/unix"
+	"golang.zx2c4.com/wireguard/wgctrl"
 )
 
 // LinkSpecController applies network.LinkSpec to the actual interfaces.
@@ -121,6 +121,12 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 			return fmt.Errorf("error listing links: %w", err)
 		}
 
+		// list all bridge vlans
+		bridgeVlans, err := netlink.BridgeVlanList()
+		if err != nil {
+			return fmt.Errorf("error getting bridge vlans: %w", err)
+		}
+
 		// loop over links and make reconcile decision
 		var multiErr *multierror.Error
 
@@ -129,7 +135,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		for it := list.Iterator(); it.Next(); {
 			link := it.Value()
 
-			if err = ctrl.syncLink(ctx, r, logger, conn, wgClient, &links, link); err != nil {
+			if err = ctrl.syncLink(ctx, r, logger, conn, wgClient, &links, link, &bridgeVlans); err != nil {
 				multiErr = multierror.Append(multiErr, err)
 			}
 		}
@@ -198,7 +204,7 @@ func findLink(links []rtnetlink.LinkMessage, name string) *rtnetlink.LinkMessage
 //
 //nolint:gocyclo,cyclop,dupl
 func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn, wgClient *wgctrl.Client,
-	links *[]rtnetlink.LinkMessage, link *network.LinkSpec,
+	links *[]rtnetlink.LinkMessage, link *network.LinkSpec, bridgeVlans *map[int32][]*nl.BridgeVlanInfo,
 ) error {
 	logger = logger.With(zap.String("link", link.TypedSpec().Name))
 
@@ -638,6 +644,24 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			existing.Attributes.Master = pointer.To(masterIndex)
 
 			logger.Info("enslaved/unslaved link", zap.String("parent", masterName))
+		}
+
+		if masterIndex != 0 && bridgeMasterName != "" {
+			portSpec := link.TypedSpec().BridgePort
+			var currentVlanIds []uint16
+			currentPvid := network.BridgePVIDSpec{}
+			if portVlans, exists := (*bridgeVlans)[int32(masterIndex)]; exists {
+				currentVlanIds = make([]uint16, len(portVlans))
+				for _, bvi := range portVlans {
+					currentVlanIds = append(currentVlanIds, bvi.Vid)
+					if bvi.PortVID() {
+						currentPvid.ID = bvi.Vid
+						currentPvid.EgressUntagged = bvi.EngressUntag()
+					}
+				}
+			}
+
+			vlansToAdd :=
 		}
 	}
 
