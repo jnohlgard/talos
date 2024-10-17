@@ -708,6 +708,8 @@ func (suite *LinkSpecSuite) TestBridge() {
 		r.TypedSpec().BridgeMaster.STP.Enabled = true
 		r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled = true
 		r.TypedSpec().BridgeMaster.VLAN.DefaultPVID = 123
+		r.TypedSpec().BridgeMaster.VLAN.StatsEnabled = true
+		r.TypedSpec().BridgeMaster.VLAN.StatsPerPort = true
 		return nil
 	})
 
@@ -725,6 +727,18 @@ func (suite *LinkSpecSuite) TestBridge() {
 						if !r.TypedSpec().BridgeMaster.VLAN.FilteringEnabled {
 							return retry.ExpectedErrorf(
 								"vlan filtering is not enabled on bridge %s", r.Metadata().ID(),
+							)
+						}
+
+						if !r.TypedSpec().BridgeMaster.VLAN.StatsEnabled {
+							return retry.ExpectedErrorf(
+								"vlan stats is not enabled on bridge %s", r.Metadata().ID(),
+							)
+						}
+
+						if !r.TypedSpec().BridgeMaster.VLAN.StatsPerPort {
+							return retry.ExpectedErrorf(
+								"vlan stats per port is not enabled on bridge %s", r.Metadata().ID(),
 							)
 						}
 

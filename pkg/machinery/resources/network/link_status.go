@@ -57,6 +57,8 @@ type LinkStatusSpec struct {
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"27"`
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"28"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"29"`
+	// Configuration for devices which are joined to a bridge
+	BridgePort BridgePortSpec `yaml:"bridgePort,omitempty" protobuf:"31"`
 }
 
 // Physical checks if the link is physical ethernet.

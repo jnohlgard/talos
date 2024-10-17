@@ -1995,10 +1995,13 @@ type STP struct {
 // BridgeVLAN contains the various options for configuring the VLAN properties of a bridge interface.
 type BridgeVLAN struct {
 	//   description: Whether VLAN filtering is enabled.
-	BridgeVLANFiltering *bool  `yaml:"vlanFiltering,omitempty"`
-	BridgeDefaultPVID   uint16 `yaml:"defaultPvid,omitempty"`
-	BridgeStatsEnabled  *bool  `yaml:"statsEnabled,omitempty"`
-	BridgeStatsPerPort  *bool  `yaml:"statsPerPort,omitempty"`
+	BridgeVLANFiltering *bool `yaml:"vlanFiltering,omitempty"`
+	//   description: Default PVID on bridged links
+	BridgeDefaultPVID uint16 `yaml:"defaultPvid,omitempty"`
+	//   description: Tell the kernel to keep statistics per VLAN
+	BridgeStatsEnabled *bool `yaml:"statsEnabled,omitempty"`
+	//   description: Tell the kernel to keep statistics per VLAN per bridge port
+	BridgeStatsPerPort *bool `yaml:"statsPerPort,omitempty"`
 }
 
 // BridgePVID specifies how the bridge should handle frames without VLAN tags
@@ -2025,9 +2028,11 @@ type Bridge struct {
 
 type BridgePort struct {
 	//   description: The name of the bridge master interface
-	BridgePortMaster         string      `yaml:"master,omitempty"`
-	BridgePVID               *BridgePVID `yaml:"pvid,omitempty"`
-	BridgePortAllowedVlanIds []uint16    `yaml:"allowedVlanIds,omitempty"`
+	BridgePortMaster string `yaml:"master,omitempty"`
+	//   description: The VLAN ID to assign to untagged ingress traffic
+	BridgePVID *BridgePVID `yaml:"pvid,omitempty"`
+	//   description: List of allowed VLAN IDs on this port
+	BridgePortAllowedVlanIds []uint16 `yaml:"allowedVlanIds,omitempty"`
 }
 
 // VlanList is a list of *Vlan structures with overridden merge process.
