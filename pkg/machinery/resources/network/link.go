@@ -129,17 +129,6 @@ func (vlan VLANSpec) MTU() uint32 {
 	return 0
 }
 
-func (b *BridgePortSpec) Merge(other BridgePortSpec) error {
-	if other.PVID.ID != 0 {
-		b.PVID = other.PVID
-	}
-
-	// dedupe the list of allowed VLAN IDs
-	b.AllowedVlanIds = slices.Compact(slices.Clone(slices.Sorted(slices.Values(slices.Concat(b.AllowedVlanIds, other.AllowedVlanIds)))))
-
-	return nil
-}
-
 // Equal checks two WireguardPeer structs for equality.
 //
 // `spec` is considered to be the result of getting current Wireguard configuration,
