@@ -99,6 +99,13 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 				},
 			},
 		},
+		BridgePort: network.BridgePortSpec{
+			PVID: network.BridgePVIDSpec{
+				ID:             3,
+				EgressUntagged: true,
+			},
+			AllowedVlanIds: []uint16{2, 3, 4000, 99, 3000},
+		},
 	}
 
 	marshaled, err := yaml.Marshal(spec)
@@ -170,6 +177,16 @@ wireguard:
           persistentKeepaliveInterval: 30s
           allowedIPs:
             - 192.83.93.94/31
+bridgePort:
+    pvid:
+        vid: 3
+        untagged: true
+    allowedVlanIds:
+        - 2
+        - 3
+        - 4000
+        - 99
+        - 3000
 `,
 		string(marshaled))
 

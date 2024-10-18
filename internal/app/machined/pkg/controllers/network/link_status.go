@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/vishvananda/netlink"
 	"net"
 	"os"
 
@@ -156,6 +157,11 @@ func (ctrl *LinkStatusController) reconcile(
 	links, err := conn.Link.List()
 	if err != nil {
 		return fmt.Errorf("error listing links: %w", err)
+	}
+
+	bridgeVlanInfos, err := netlink.BridgeVlanList()
+	if err != nil {
+		return fmt.Errorf("error listing bridge vlans: %w", err)
 	}
 
 	// for every rtnetlink discovered link
@@ -349,6 +355,18 @@ func (ctrl *LinkStatusController) reconcile(
 				} else {
 					networkadapter.WireguardSpec(&status.Wireguard).Decode(wgDev, true)
 				}
+			}
+
+			if vlans, exists := bridgeVlanInfos[int32(status.Index)]; exists {
+				allowedVlanIds := make([]uint16, len(vlans))
+				for _, bvi := range vlans {
+					if bvi.PortVID() {
+						status.BridgePort.PVID.ID = bvi.Vid
+						status.BridgePort.PVID.EgressUntagged = bvi.EngressUntag()
+					}
+					allowedVlanIds = append(allowedVlanIds, bvi.Vid)
+				}
+				status.BridgePort.AllowedVlanIds = allowedVlanIds
 			}
 
 			return nil
