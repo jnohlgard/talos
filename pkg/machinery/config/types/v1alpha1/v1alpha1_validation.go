@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"os"
@@ -213,7 +214,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 					}
 
 					if bondIface, exists := bondedInterfaces[iface]; exists {
-						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of an interface and a bond: %q and %q", iface, bondIface, device.Interface()))
+						result = multierror.Append(result, fmt.Errorf("interface %q is declared as part of a bridge and a bond: %q and %q", iface, bondIface, device.Interface()))
 					}
 
 					bridgedInterfaces[iface] = device.Interface()
@@ -221,8 +222,11 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			}
 		}
 
+		pairedInterfaces := bondedInterfaces
+		maps.Copy(pairedInterfaces, bridgedInterfaces)
+
 		for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
-			warn, err := ValidateNetworkDevices(device, bondedInterfaces, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes)
+			warn, err := ValidateNetworkDevices(device, pairedInterfaces, CheckDeviceInterface, CheckDeviceAddressing, CheckDeviceRoutes)
 			warnings = append(warnings, warn...)
 			result = multierror.Append(result, err)
 		}
@@ -788,7 +792,7 @@ func validateIPOrCIDR(address string) error {
 // has been specified.
 //
 //nolint:gocyclo
-func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]string, error) {
+func CheckDeviceAddressing(d *Device, pairedInterfaces map[string]string) ([]string, error) {
 	var result *multierror.Error
 
 	if d == nil {
@@ -797,9 +801,9 @@ func CheckDeviceAddressing(d *Device, bondedInterfaces map[string]string) ([]str
 
 	var warnings []string
 
-	if _, bonded := bondedInterfaces[d.Interface()]; bonded {
+	if _, paired := pairedInterfaces[d.Interface()]; paired {
 		if d.DHCP() || d.DeviceCIDR != "" || len(d.DeviceAddresses) > 0 || d.DeviceVIPConfig != nil {
-			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded interface shouldn't have any addressing methods configured"))
+			result = multierror.Append(result, fmt.Errorf("[%s] %q: %s", "networking.os.device", d.DeviceInterface, "bonded/bridged interface shouldn't have any addressing methods configured"))
 		}
 	}
 
