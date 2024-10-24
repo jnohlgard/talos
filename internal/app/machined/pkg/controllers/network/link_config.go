@@ -372,7 +372,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(logger *zap.Logger
 			vlanName := nethelpers.VLANLinkName(device.Interface(), vlan.ID())
 
 			linkMap[vlanName] = &network.LinkSpecSpec{
-				Name:        device.Interface(),
+				Name:        vlanName,
 				Up:          true,
 				ConfigLayer: network.ConfigMachineConfiguration,
 			}
